@@ -46,6 +46,18 @@
       mod = stats::model.matrix(~-1 + phenotype + batch)
       coeffs = cbind(simOptions$pLFC, simOptions$bLFC)
     }
+    if(is.numeric(simOptions$bPattern)) {
+      pr <- simOptions$bPattern
+      ## make group labels for phenotype LFC
+      phenotype <- as.factor(unlist(sapply(names(n), function(i) {rep(i, n[i])}, simplify = F, USE.NAMES = F)))
+      # make batch labels for batch LFC
+      batch <- as.factor(unlist(sapply(names(n), function(i) {
+        1 - 2*stats::rbinom(n[i],size=1,prob=pr[i])
+      }, simplify = F)))
+      # make model matrix
+      mod = stats::model.matrix(~-1 + phenotype + batch)
+      coeffs = cbind(simOptions$pLFC, simOptions$bLFC)
+    }
   }
 
   # generate read counts
