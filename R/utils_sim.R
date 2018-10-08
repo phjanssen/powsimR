@@ -661,6 +661,9 @@
   ngenes = sim.options$ngenes
   mod = modelmatrix
   beta = coef.dat
+  batch = as.data.frame(modelmatrix)$batch1
+  nbatch = length(which(batch == 1))
+  delta.drop = sim.options$b.deltaDrop
 
   if (attr(sim.options, 'param.type') == 'estimated') {
     # define NB params
@@ -796,6 +799,18 @@
       zero.mark = sapply(p0vec, function(x) {
         rbinom(nsamples,  prob = (1 - x), size = 1)
       }, simplify = T)
+      
+      if(!is.null(delta.drop)) {
+        p0vec_batch <- rnorm(n=nbatch, mean=predp0.mean+delta.drop, sd = predp0.sd)
+        p0vec_batch[p0vec_batch<0] = runif(length(which(p0vec_batch<0)),0,0.05)
+        p0vec_batch[p0vec_batch>1] = runif(length(which(p0vec_batch>1)),0.85,1)
+        
+        zero.batch <- sapply(p0vec_batch, function(x) {   # sample dropouts with batch-adjusted probabilty vector
+          rbinom(nbatch,  prob = (1 - x), size = 1)
+        }, simplify = T)
+        
+        zero.mark[as.logical(batch),] <- zero.batch # replace "batch"-rows with values sampled from p0batch
+      }
 
       p0mat = matrix(t(zero.mark), nrow = ngenes, ncol = nsamples)
 
